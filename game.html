@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="icon/logo.png" sizes="32x32">
+<title>草船借箭</title>
+<script src = "js/arrow.js"></script>
+<script src = "js/ship.js"></script>
+<script src = "js/health.js"></script>
+<script src = "js/tools.js"></script>
+<script src = "js/ball.js"></script>
+<script type="text/javascript">
+	function $$(id){
+            return document.getElementById(id);
+        }
+        window.onload = function(){
+			
+			/*
+				2019/12/8
+			*/
+			
+            var cnv = $$("canvas");
+            var cxt = cnv.getContext("2d");
+			var set = document.getElementById("canvas");
+			var fail = 0;
+			var inv = $$("introduce");
+            var ixt = inv.getContext("2d");
+			var scores = [];	//排行榜
+			var settlement = 0;//道具类型
+			var health = new Health(5,5,4,4);	//生命值
+			var score = 0;	//得分
+			var v = 2;	//箭的速度
+			var sv = 30;//使用键盘时小船速度
+			var arrows = [];	
+			var angle = 0;	//箭的角度
+			var f = 0;		//箭剩余数
+			var n = 75;	//初始箭总数
+			var str;	//得分字符串
+			var soureX,soureY; //箭的终点值
+			var checkpoint = 1; //关卡
+			var wink = 0;//风的等级
+			var water = 0;//水
+			var ship = new Ship(cnv.width/4,cnv.height-100);//草船
+			ship.t = 0;	//草船的草棚
+			var time = 0;	//显示关卡时间
+			ship.dx = 0;
+			ship.dy = 0;
+			var ball = new Ball(5,30);//道具
+			createBall();//初始化道具
+			var mouse = tools.getMouse(cnv);
+			//随机产生n支箭
+			init();
+			initGame();
+			//鼠标监测
+			document.addEventListener("mousedown",onMouseClick,false);
+			document.addEventListener("mousemove",onMouse,false);
+			function onMouse(){
+				if(ship.checkMouse(mouse)&&fail ==0 )
+					{
+						set.style.cursor = "pointer";
+					}else{
+						set.style.cursor = "auto";
+					}
+			}
+			function onMouseClick(){
+				if (ship.checkMouse(mouse)) {
+					document.removeEventListener("mousemove", onMouse, false);
+					set.style.cursor = "move";
+                    dx = mouse.x - ship.x;
+                    dy = mouse.y - ship.y;
+                    document.addEventListener("mousemove", onMouseMove, false);
+                    document.addEventListener("mouseup", onMouseUp, false);
+                }
+			}
+            function onMouseMove() {
+                ship.x = mouse.x - dx;
+                ship.y = mouse.y - dy;
+				if(ship.x<0)
+					ship.x=0;
+				if(ship.x>cnv.width-100)
+					ship.x = cnv.width-100;
+				if(ship.y<0)
+					ship.y = 0;
+				if(ship.y>cnv.height-30)
+					ship.y=cnv.height-30;
+                
+            }
+            function onMouseUp() {
+      
+                document.removeEventListener("mouseup", onMouseUp, false);
+                document.removeEventListener("mousemove", onMouseMove, false);
+				document.addEventListener("mousemove",onMouse,false);
+            }
+			//初始化游戏
+			function initGame(){
+					
+					arrows.splice(0,arrows.length);
+					n = 60 + checkpoint * 15;
+					v = checkpoint + 1 - wink;
+					health.value = health.length;//回复生命值
+					init();
+					water = 0;
+					createBall();
+					time = 0;
+					settlement = 0;
+					
+					//document.getElementById("bgm").play();
+			}
+			function onMouseDown(){
+				checkpoint = 1;
+				health.value = health.length = 4;
+				score = 0;
+				settlement = 0;
+				ship.r = 0;
+				wink = 0;
+				water = 0;
+				fail = 0;
+				ship.t = 0;
+				ship.x = cnv.width/4;
+				ship.y = cnv.height-100;
+				initGame();
+				document.removeEventListener("mousedown", onMouseDown, false);	
+				document.addEventListener("mousedown",onMouseClick,false);
+				document.addEventListener("mousemove",onMouse,false);
+			}
+			//键盘监测
+			var key = tools.getKey();
+			window.addEventListener("keydown", function (e) {
+                
+				if(fail == 0)
+                {
+						//根据key.direction的值，判断船移动方向
+                switch (key.direction) {              
+                    case "left":
+                        ship.x -= sv;
+                        //检测左边界
+                        if (ship.x < 0) {
+                            ship.x = 0;
+                        }
+                        break;
+                    case "right":
+                        ship.x += sv;
+                        //检测右边界
+                        if (ship.x + 100> cnv.width) {
+                            ship.x = cnv.width-100;
+                        }
+                        break;
+					 case "up":
+                        ship.y -= sv;
+                        //检测上边界
+                        if (ship.y < 0) {
+                            ship.y = 0;
+                        }
+                        break;
+					 case "down":
+                        ship.y += sv;
+                        //检测右边界
+                        if (ship.y + 30> cnv.height) {
+                            ship.y = cnv.height-30;
+                        }
+                        break;
+                        //default值
+                    default:
+                        
+                }
+				}
+            }, false);
+			function init(){
+				var dx,dy;
+				var arrow;
+				//火箭的生成
+				var color;
+				if(water == 0)
+					color = "red";
+				else
+					color = "black";
+				for(var i = 0;i<checkpoint;i++){
+				soureX = Math.random()*cnv.width; 
+				soureY = Math.random()*cnv.height*-5;
+				arrow = new Arrow(soureX,soureY,color);
+				//arrow.color = "red";
+				//箭的起点坐标
+				arrow.sx = soureX;
+				arrow.sy = soureY;
+				//箭的终点
+				arrow.ex = (Math.random())*cnv.width;
+				arrow.ey = cnv.height;
+				//是否处于船上
+				arrow.hit = 0;
+				//相对于船的位置
+				arrow.dx = 0;
+				arrow.dy = 0;
+				//存在
+				arrow.exist = 1;
+				dx = arrow.ex - arrow.sx;
+				dy = arrow.ey - arrow.sy;
+				angle = Math.atan2(dy,dx);
+				arrow.angle = angle;
+				arrows.push(arrow);
+				}
+				//普通箭的生成
+				for(var i = 0;i<n/2;i++){
+				soureX = Math.random()*cnv.width; 
+				soureY = Math.random()*cnv.height*-5;
+				arrow = new Arrow(soureX,soureY);
+				//箭的起点坐标
+				arrow.sx = soureX;
+				arrow.sy = soureY;
+				//箭的终点
+				arrow.ex = (Math.random()*1.5-0.25)*cnv.width;
+				arrow.ey = cnv.height;
+				//是否处于船上
+				arrow.hit = 0;
+				//相对于船的位置
+				arrow.dx = 0;
+				arrow.dy = 0;
+				//存在
+				arrow.exist = 1;
+				dx = arrow.ex - arrow.sx;
+				dy = arrow.ey - arrow.sy;
+				angle = Math.atan2(dy,dx);
+				arrow.angle = angle;
+				arrows.push(arrow);
+			}
+			for(var i = 0;i<n/2;i++){
+				soureX = (Math.random())*cnv.width; 
+				soureY = Math.random()*cnv.height*-2;
+				arrow = new Arrow(soureX,soureY);
+				//箭的起点坐标
+				arrow.sx = soureX;
+				arrow.sy = soureY;
+				//箭的终点
+				arrow.ex = (Math.random()*3-1)*cnv.width;
+				arrow.ey = cnv.height;
+				//是否处于船上
+				arrow.hit = 0;
+				//相对于船的位置
+				arrow.dx = 0;
+				arrow.dy = 0;
+				arrow.exist = 1;
+				dx = arrow.ex - arrow.sx;
+				dy = arrow.ey - arrow.sy;
+				angle = Math.atan2(dy,dx);
+				arrow.angle = angle;
+				arrows.push(arrow);
+			}
+			}
+			function createBall(){
+				ballType = Math.round(Math.random()*3);//道具生成
+				ball.x = (Math.random())*cnv.width; 
+				ball.y = Math.random()*cnv.height*-2;
+				ball.vx = 5;
+				ball.vy = 5;
+			}
+			//边界检测 碰撞检测
+			function checkBall(){
+				if(ball.x<ball.radius){
+					ball.x=ball.radius;
+					ball.vx*=-1;
+				}
+				if(ball.x>cnv.width-ball.radius){
+					ball.x = cnv.width-ball.radius;
+					ball.vx*=-1;
+				}
+				if(ball.y>cnv.height)
+					ballType = -1;
+				if(ship.checkMouse(ball)&&health.value>0)
+					{
+						
+						if(ballType == 0)
+						{
+							wink++;
+							v = v = checkpoint + 1 - wink;
+						}
+						else if(ballType ==1){
+							health.length++;
+							health.value++;
+						}
+						else if(ballType == 2)
+							ship.t+=5;
+						else if(ballType == 3)
+							water = 1;
+						ballType = -1;
+					}
+			}
+			(function frame(){
+				window.requestAnimationFrame(frame);
+				cxt.clearRect(0,0,cnv.width,cnv.height);
+				f = 0;
+				time++;
+				if(time>=50){
+				//道具运动
+					if(ballType!=-1){
+						ball.x+=ball.vx;
+						ball.y+=ball.vy;
+						checkBall();
+						if(ballType == 0)
+							ball.windFill(cxt);
+						else if(ballType ==1)
+							ball.addFill(cxt);
+						else if(ballType == 2)
+							ball.starFill(cxt);
+						else if(ballType == 3)
+							ball.waterFill(cxt);
+					}
+				//射箭
+				arrows.forEach(function (arrow){
+				//射中船的箭
+				if(ship.checkMouse(arrow)&&arrow.hit==0){
+					//火箭射中
+					if(arrow.color == "red"){
+						ship.r = 1;
+						health.value = 0;
+					}//命中人员失去一点生命值
+					if(arrow.x-ship.x<60&&arrow.x-ship.x>40&&health.value>0){
+						if(ship.t == 0)	
+							health.value--;
+						else{
+							ship.t--;
+							arrow.exist = 0;
+						}
+						
+					}	
+					else if(health.value>0)//生命值大于0时获得一分
+						score++;
+					arrow.hit = 1;
+					arrow.dx = arrow.x-ship.x;
+					arrow.dy = arrow.y-ship.y;
+					
+				}
+				if(arrow.hit == 1){//在船上的箭
+					arrow.x = arrow.dx+ship.x;
+					arrow.y = arrow.dy+ship.y;
+					if(ship.r == 1)
+						arrow.color ="red";
+				}
+				//碰壁后不再移动
+				if(arrow.x<cnv.width&&arrow.y<cnv.height&&arrow.x>0&&arrow.hit==0){
+					arrow.x+=Math.cos(arrow.angle)*v;
+					arrow.y+=Math.sin(arrow.angle)*v;
+					f++;
+				}else if(arrow.hit==0){//射空的箭
+					arrow.hit = -1;
+				}
+					if(arrow.exist == 1)
+					{
+						arrow.fill(cxt);
+						//cxt.stroke();
+					}
+					
+				})
+					
+				//得分显示
+				str = "得分" + score + " 剩余箭数" + f + " ";
+				cxt.font ="bold 15px 宋体";
+				cxt.fillText(str,cnv.width-cxt.measureText(str).width,20,cxt.measureText(str).width);
+				//cxt.stroke();
+				//生命值显示
+				health.fill(cxt);
+				//结束判定
+				if(health.value == 0)//生命值为0失败
+					{
+						cxt.font ="bold 22px 黑体";
+						set.style.cursor = "auto";
+						var die = "胜败乃兵家常事，少侠请重新来过！";
+						cxt.fillText(die,cnv.width/2-cxt.measureText(die).width/2,cnv.height/2,cxt.measureText(die).width);
+						cxt.font ="bold 18px 宋体";
+						var die = "单击鼠标左键重新开始";
+						cxt.fillText(die,cnv.width/2-cxt.measureText(die).width/2,cnv.height/2+40,cxt.measureText(die).width);
+						document.removeEventListener("mousedown", onMouseClick, false);
+						document.removeEventListener("mouseup", onMouseUp, false);
+						document.removeEventListener("mousemove", onMouseMove, false);
+						document.addEventListener("mousedown",onMouseDown,false);
+						if(fail == 0){
+							settlement = 1;
+							scores.push(score);
+							fail = 1;
+						}
+					}else if(f == 0)//箭射完且生命值大于零进入下一关
+					{
+						checkpoint++;
+						initGame(checkpoint);
+						/*
+						createBall();
+						arrows.splice(0,arrows.length);
+						n += 20;//增加箭数
+						v++;//增加箭数量
+						health.value = health.length;//回复生命值
+						init();
+						
+						time = 0;*/
+					}
+										
+						
+				}
+				ship.stroke(cxt);
+				if(time<50){
+					cxt.beginPath();
+					cxt.font ="bold 100px 黑体";
+					var c = "第" + checkpoint + "轮";
+					cxt.fillText(c,cnv.width/2-cxt.measureText(c).width/2,cnv.height/2,400);	
+					cxt.closePath();
+					cxt.stroke();
+				
+				}					
+				ixtPlay();
+			})();
+			function ixtPlay(){
+				var iStr = "箭雨速度-1";
+				if(settlement == 0){
+				ixt.clearRect(0,0,inv.width,inv.height);
+				var dBall = new Ball(20,40);
+				dBall.windFill(ixt);
+				dBall.y+=40;
+				dBall.addFill(ixt);
+				dBall.y+=40;
+				dBall.starFill(ixt);
+				dBall.y+=40;
+				dBall.waterFill(ixt);
+
+				ixt.font ="bold 14px 宋体";
+				ixt.fillText(iStr,35,45,ixt.measureText(iStr).width);
+				iStr = "生命上限+1";
+				ixt.fillText(iStr,35,85,ixt.measureText(iStr).width);
+				iStr = "抵挡5次伤害";
+				ixt.fillText(iStr,35,125,ixt.measureText(iStr).width);
+				iStr = "熄灭下轮火箭";
+				ixt.fillText(iStr,35,165,ixt.measureText(iStr).width);
+				ixt.moveTo(0,185);
+				ixt.lineTo(150,185);
+				ixt.strokeStyle = "#696969";
+				ixt.stroke();
+				var dArrow = new Arrow(90,215,"red");
+				dArrow.fill(ixt);
+				iStr = "当火箭命中你的草";
+				ixt.fillText(iStr,15,255,ixt.measureText(iStr).width);
+				iStr = "船时则游戏直接失败！";
+				ixt.fillText(iStr,3,275,ixt.measureText(iStr).width);
+				ixt.beginPath();
+				ixt.strokeStyle = "#696969";
+				ixt.moveTo(0,300);
+				ixt.lineTo(150,300);
+				ixt.closePath();
+				ixt.stroke();
+				dArrow.y = 330;
+				dArrow.color = "black";
+				dArrow.fill(ixt);
+				iStr = "用船的两端接住箭";
+				ixt.fillText(iStr,15,370,ixt.measureText(iStr).width);
+				iStr = "则分数+1！";
+				ixt.fillText(iStr,40,390,ixt.measureText(iStr).width);
+				settlement = -1;
+			}else if(settlement == 1){
+				ixt.clearRect(0,0,inv.width,inv.height);
+				
+				scores.sort(function(a,b){
+					return b - a;
+				});
+				iStr = "排行榜";
+				ixt.fillText(iStr,55,30,ixt.measureText(iStr).width);
+				for(var i = 0;i<scores.length;i++){
+					var serial = i + 1;						
+					ixt.font ="bold 14px 宋体";
+					iStr = serial +".  " + scores[i] + "分";	
+					ixt.fillText(iStr,20,serial*20+40,ixt.measureText(iStr).width);
+				
+				}
+				for(var i = 0;i<scores.length;i++){
+					if(scores[i] == score){
+						ixt.font ="bold 10px 宋体";
+						iStr = "新";
+						ixt.fillText(iStr,4,i*20+59,ixt.measureText(iStr).width);
+						break;
+					}
+				}
+				settlement = -1;
+			}
+			}
+			//绘制描述栏
+			//目前最高分 408
+
+        }
+</script>
+</head> 
+<body>
+<canvas id = "canvas" width = "400" height = "400" style = "border: 1px solid gray;"></canvas>
+<canvas id = "introduce" width = "150" height = "400" style = "border: 1px solid gray;"></canvas>
+</body>
+</html>
