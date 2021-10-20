@@ -2,36 +2,22 @@
 
 #### 介绍
 基于Canvas的H5小游戏，灵感来源于三国演义中的草船借箭
+很久之前的网页动画课程课程作业，在U盘里翻到发出来让大伙图一乐
 
 #### 软件架构
-软件架构说明
+基于Canvas开发的H5小游戏
 
 
-#### 安装教程
+#### 如何游玩
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+直接双击使用浏览器打开game.html文件
 
 #### 使用说明
+使用鼠标左键长按来拖拽控制小船移动
+当船的双头接住箭则可获得分数，击中头部会失去一点体力，被火箭击中直接GG
+不用害怕，每一关都会有一种随机道具，并且过关时会恢复满体力
+箭的速度会随着关卡的深入而加快
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+#### 预览图
+![预览图](https://images.gitee.com/uploads/images/2021/1020/200239_88e57d46_7603770.gif "bandicam 2021-10-20 19-58-16-385.gif")
 
-#### 参与贡献
-
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
-
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
